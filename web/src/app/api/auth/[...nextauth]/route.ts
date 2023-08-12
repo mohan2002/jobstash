@@ -1,22 +1,22 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import User from "../../../../../models/users";
-import secrets from "../../../../../secrets.json";
 import { connectDB } from "../../../../../utils/database";
 
 export const authOptions = {
   providers: [
     GoogleProvider({
-      clientId: secrets.web.client_id,
-      clientSecret: secrets.web.client_secret,
+      clientId: process.env.CLIENT_ID as string,
+      clientSecret: process.env.CLIENT_SECRET as string,
     }),
   ],
   callbacks: {
     async session({ session }: any) {
+      const sessionUser = await User.findOne({ email: session.user.email });
+      session.user.id = sessionUser._id;
       return session;
     },
     async signIn({ profile }: any) {
-      console.log(profile);
       try {
         await connectDB();
         const UserExist = await User.findOne({ email: profile.email });
@@ -34,8 +34,7 @@ export const authOptions = {
       }
     },
   },
-  secret:
-    "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY5MDg3MTE3MiwiaWF0IjoxNjkwODcxMTcyfQ.jgD2fwQVprv16A1JT-6QXQ5U-8tD9rHvSTl3fCJO3l4",
+  secret: "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY5MDg3MTE3MiwiaWF0IjoxNjkwODcxMTcyfQ.jgD2fwQVprv16A1JT-6QXQ5U-8tD9rHvSTl3fCJO3l4",
 };
 
 const handler = NextAuth(authOptions);
